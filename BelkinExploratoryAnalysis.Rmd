@@ -10,8 +10,9 @@ knitr::opts_chunk$set(echo = TRUE)
 ```
 
 
-```{r, echo=FALSE}
-BelkinElagoComplete <- read.delim("C:/Users/kimne/Ubiqum/Module2/BelkinElagoComplete.csv")
+```{r include=FALSE}
+library(funModeling)
+BelkinElagoComplete <- read.csv2("C:/Users/kimne/Ubiqum/Module2/BelkinElagoComplete_2.csv")
 ```
 
 ## Exploration Belkin Data Set
@@ -23,7 +24,6 @@ Therefor, we take a look at the descriptive statistics in the first step.
 
 ```{r BelkinElagoComplete}
 summary(BelkinElagoComplete)
-str(BelkinElagoComplete)
 
 summary(BelkinElagoComplete$salary)
 
@@ -36,37 +36,36 @@ summary(BelkinElagoComplete$credit)
 
 In a next step, we will figure out the relationships and correlations between variables using plots, correlation matrix and variances
 
-```{r BelkinElagoComplete, echo=FALSE}
+```{r BelkinElagoComplete2, echo=FALSE}
 names(BelkinElagoComplete)<-c("salary","age","education","car","zip","credit","brand")
+BelkinData<-BelkinElagoComplete
 ```
 *Correlations
 
-```{r BelkinElagoComplete}
+```{r BelkinElagoComplete3}
+plot_num(BelkinData,bins=10)
+cross_plot(data=BelkinData,input="education",target="brand")
 correlation_table(data=BelkinData,target="salary")
 correlation_table(data=BelkinData,target="credit")
 ```
 
 ## Plots and Histograms
 
-```{r BelkinElagoComplete, echo=FALSE}
-plot(BelkinElagoComplete$age,BelkinElagoComplete$salary)
-hist(BelkinElagoComplete$credit)
+```{r BelkinElagoComplete4, echo=FALSE}
+hist(BelkinData$education)
+hist(BelkinData$credit)
 ```
 
 Since there seems to be no meaningful connection between age and salary we are now going to explore the relationship between education level and salary, which is straighforward.
 
 ### Plotting education against salary
 
-```{r BelkinElagoComplete, echo=FALSE}
+```{r BelkinElagoComplete5, echo=FALSE}
 ggplot(BelkinData,
        aes(education, salary)) + geom_jitter()
 
 ggplot(BelkinData, 
   mapping = aes(x = education, y = salary)) + geom_jitter(aes(color = age))
-
-ggplot(BelkinData,
-       mapping=aes(x=education,y=salary))+
-  geom_jitter(color=ifelse(BelkinData$age<=40, "red", "black"))
 
 ggplot(BelkinData, 
   mapping = aes(x = education, y = salary)) + geom_jitter(aes(color = brand))
@@ -79,23 +78,23 @@ We can see that age does not affect salary in a crucially but education level do
 
 In a next step we will now take into account the credit variable in order to explore if credit status is affected by age, salary and education.
 
-```{r BelkinElagoComplete, echo=FALSE}
+```{r BelkinElagoComplete6, echo=FALSE}
 ggplot(BelkinData, mapping = aes(x=age,y=credit)) +
-  geom_point(aes(color = salary)) + facet_grid(~education)
+  geom_point(aes(color = salary)) + facet_wrap(~education)
 
-ggplot(BelkinData, mapping = aes(x=age, y=credit, fill = salary)) +
+ggplot(BelkinData, mapping = aes(x=age, y=credit, fill = brand)) +
   geom_bar(stat = "identity") + facet_wrap(~education)
 
-ggplot(BelkinData, mapping = aes(x=salary, y=credit)) +
-  geom_point(aes(color = age)) + facet_grid(~education)
+ggplot(BelkinData, mapping = aes(x=credit, y=salary)) +
+  geom_point(aes(fill = brand)) + facet_grid(~education)
 ```
 
 ### Boxplot analysis
 
 Finally, we will investigate the density and ranges of credit status and age, devided by the brands Belkin and Elago, using boxplots.
 
-```{r BelkinElagoComplete, echo=FALSE}
-ggplot(BelkinData, mapping = aes(y=credit))+facet_wrap(~education)+geom_boxplot()
+```{r BelkinElagoComplete7, echo=FALSE}
+plotar(data=BelkinData,input="credit",target="education",plot_type="boxplot")
 
 ggplot(BelkinData, mapping = aes(y=credit))+
   facet_wrap(~brand)+geom_boxplot()
