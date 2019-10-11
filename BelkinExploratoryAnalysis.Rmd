@@ -15,7 +15,6 @@ library(funModeling)
 BelkinElagoComplete <- read.csv2("C:/Users/kimne/Ubiqum/Module2/BelkinElagoComplete_2.csv")
 ```
 
-## Exploration Belkin Data Set
 
 This analysis serves the purpose to explore the Belkin Elago Data and to gather some first insights and relations on the data set.
 Therefor, we take a look at the descriptive statistics in the first step.
@@ -34,72 +33,107 @@ summary(BelkinElagoComplete$credit)
 
 ### Exploring relationships between variables
 
-In a next step, we will figure out the relationships and correlations between variables using plots, correlation matrix and variances
+After some first insights given by the descriptive statistics, in the next steps, we will figure out the relationships and correlations between variables using plots and histograms, by calculating correlations and variances and finally by using boxplots.
+But one after another :)
 
 ```{r BelkinElagoComplete2, echo=FALSE}
 names(BelkinElagoComplete)<-c("salary","age","education","car","zip","credit","brand")
 BelkinData<-BelkinElagoComplete
 ```
-*Correlations
+
 
 ```{r BelkinElagoComplete3}
 plot_num(BelkinData,bins=10)
 cross_plot(data=BelkinData,input="education",target="brand")
 correlation_table(data=BelkinData,target="salary")
-correlation_table(data=BelkinData,target="credit")
+
 ```
 
-## Plots and Histograms
+The correlation table illustrates a strong relationship between salary and credit.
+Moreover, we can see the distribution of the attributes included in the data set by looking at this beautiful colorful table.
+
+## Using some Histograms
+
+We start with two simple histograms for education level, credit status and age.
 
 ```{r BelkinElagoComplete4, echo=FALSE}
 hist(BelkinData$education)
 hist(BelkinData$credit)
+hist(BelkinData$age)
 ```
 
-Since there seems to be no meaningful connection between age and salary we are now going to explore the relationship between education level and salary, which is straighforward.
+## Checking out the attribute "car"
 
-### Plotting education against salary
+Then, we go on by getting to know the attribute "cars". We therefore count the number of observations in our data set for every characteristic included.
+
+
+```{r carsAnalysis, echo=FALSE}
+factor.car<-as.factor(BelkinData$car)
+freq(factor.car)
+```
+
+Since the characteristics themselves seem to have no meaningful explanation (it is not possible that 7.99% of the people have 20 cars), the only logical conclusion must be that the number equals a special car type. 
+For example 20 = VW Gold, a very popular car. And 9 = Porsche 911, a maybe not so common car :)
+
+We are now going to explore the relationship between salary and brand choice.
+
+### Exploring the relationship between salary and brand choice
+
+Moreover, the following plots will highlight the relationship between the salary of an individual and its brand choice.
 
 ```{r BelkinElagoComplete5, echo=FALSE}
-ggplot(BelkinData,
-       aes(education, salary)) + geom_jitter()
 
 ggplot(BelkinData, 
-  mapping = aes(x = education, y = salary)) + geom_jitter(aes(color = age))
+  mapping = aes(x = age, y = salary)) + geom_jitter(aes(color = brand))
 
 ggplot(BelkinData, 
   mapping = aes(x = education, y = salary)) + geom_jitter(aes(color = brand))
 
 ```
 
-We can see that age does not affect salary in a crucially but education level does. Also it seems to be that Elago is somewhat more popular among well educated and good earning individuals.
+It seems to be that Elago is somewhat more popular among well educated and good earning individuals.
+We can also see that age does not affect salary crucially but education level does.
 
 ### Explaining patterns in credit status
 
 In a next step we will now take into account the credit variable in order to explore if credit status is affected by age, salary and education.
 
-```{r BelkinElagoComplete6, echo=FALSE}
+Not surprisingly, credit status depends heavily on education level and salary. Age, however, does not seem to have any relevance in this case.
+
+```{r PatternsinCredit, echo=FALSE}
 ggplot(BelkinData, mapping = aes(x=age,y=credit)) +
   geom_point(aes(color = salary)) + facet_wrap(~education)
+```
 
+### Explaining more about patterns in brand choice
+
+In the following, we will check whether age, credit status, salary and education affect the brand choice of individuals.
+
+Two different plots are being applied for this purpose, with the second one showing the age via a variable called "age.bins". This variable represents age separated into 6 bins, as shown below. 
+
+```{r PatternsinBrand, echo=FALSE}
 ggplot(BelkinData, mapping = aes(x=age, y=credit, fill = brand)) +
   geom_bar(stat = "identity") + facet_wrap(~education)
 
-ggplot(BelkinData, mapping = aes(x=credit, y=salary)) +
-  geom_point(aes(fill = brand)) + facet_grid(~education)
+age.bins <- equal_freq(var=BelkinData$age, n_bins=6)
+
+ggplot(BelkinData, mapping = aes(x=age.bins, y=salary, fill = brand)) +
+   geom_bar(stat = "identity") + facet_wrap(~education)
+
 ```
 
 ### Boxplot analysis
 
-Finally, we will investigate the density and ranges of credit status and age, devided by the brands Belkin and Elago, using boxplots.
+The first boxplots represents the credit status as the target variable for all four education levels. The findings are not too surprising.
 
-```{r BelkinElagoComplete7, echo=FALSE}
+Finally, we will investigate the density and ranges of salary and age, devided by the brands Belkin and Elago, using boxplots.
+
+```{r Boxplots, echo=FALSE}
 plotar(data=BelkinData,input="credit",target="education",plot_type="boxplot")
 
-ggplot(BelkinData, mapping = aes(y=credit))+
-  facet_wrap(~brand)+geom_boxplot()
+plotar(data=BelkinData,input="age",target="brand",plot_type="boxplot")
 
-ggplot(BelkinData, mapping = aes(y=age))+
+ggplot(BelkinData, mapping = aes(y=salary))+
   facet_wrap(~brand)+geom_boxplot()
 ```
 
