@@ -1,0 +1,99 @@
+---
+title: "ExploratoryAnalysis"
+author: "KimN"
+date: "10 10 2019"
+output: html_document
+---
+
+```{r, echo=FALSE}
+BelkinElagoComplete <- read.delim("C:/Users/kimne/Ubiqum/Module2/BelkinElagoComplete.csv")
+```
+
+## Exploration Belkin Data Set
+
+This analysis serves the purpose to explore the Belkin Elago Data and to gather some first insights and relations on the data set.
+Therefor, we take a look at the descriptive statistics in the first step.
+
+### Descriptive statistics
+
+```{r BelkinElagoComplete}
+summary(BelkinElagoComplete)
+str(BelkinElagoComplete)
+summary(BelkinElagoComplete$salary)
+summary(BelkinElagoComplete$age)
+summary(BelkinElagoComplete$credit)
+```
+
+### Exploring relationships between variables
+
+In a next step, we will figure out the relationships and correlations between variables using plots, correlation matrix and variances
+
+```{r BelkinElagoComplete, echo=FALSE}
+names(BelkinElagoComplete)<-c("salary","age","education","car","zip","credit","brand")
+```
+*Correlations
+
+```{r BelkinElagoComplete}
+correlation_table(data=BelkinData,target="salary")
+correlation_table(data=BelkinData,target="credit")
+```
+
+## Plots and Histograms
+
+```{r BelkinElagoComplete, echo=FALSE}
+plot(BelkinElagoComplete$age,BelkinElagoComplete$salary)
+hist(BelkinElagoComplete$credit)
+```
+
+Since there seems to be no meaningful connection between age and salary we are now going to explore the relationship between education level and salary, which is straighforward.
+
+### Plotting education against salary
+
+```{r BelkinElagoComplete, echo=FALSE}
+ggplot(BelkinData,
+       aes(education, salary)) + geom_jitter()
+
+ggplot(BelkinData, 
+  mapping = aes(x = education, y = salary)) + geom_jitter(aes(color = age))
+
+ggplot(BelkinData,
+       mapping=aes(x=education,y=salary))+
+  geom_jitter(color=ifelse(BelkinData$age<=40, "red", "black"))
+
+ggplot(BelkinData, 
+  mapping = aes(x = education, y = salary)) + geom_jitter(aes(color = brand))
+
+```
+
+We can see that age does not affect salary in a crucially but education level does. Also it seems to be that Elago is somewhat more popular among well educated and good earning individuals.
+
+### Explaining patterns in credit status
+
+In a next step we will now take into account the credit variable in order to explore if credit status is affected by age, salary and education.
+
+```{r BelkinElagoComplete, echo=FALSE}
+ggplot(BelkinData, mapping = aes(x=age,y=credit)) +
+  geom_point(aes(color = salary)) + facet_grid(~education)
+
+ggplot(BelkinData, mapping = aes(x=age, y=credit, fill = salary)) +
+  geom_bar(stat = "identity") + facet_wrap(~education)
+
+ggplot(BelkinData, mapping = aes(x=salary, y=credit)) +
+  geom_point(aes(color = age)) + facet_grid(~education)
+```
+
+### Boxplot analysis
+
+Finally, we will investigate the density and ranges of credit status and age, devided by the brands Belkin and Elago, using boxplots.
+
+```{r BelkinElagoComplete, echo=FALSE}
+ggplot(BelkinData, mapping = aes(y=credit))+facet_wrap(~education)+geom_boxplot()
+
+ggplot(BelkinData, mapping = aes(y=credit))+
+  facet_wrap(~brand)+geom_boxplot()
+
+ggplot(BelkinData, mapping = aes(y=age))+
+  facet_wrap(~brand)+geom_boxplot()
+```
+
+

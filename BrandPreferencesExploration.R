@@ -1,4 +1,4 @@
-BelkinElagoComplete <- read.delim("C:/Users/kimne/Ubiqum/Module2/BelkinElagoComplete.csv")
+
 View(BelkinElagoComplete)
 mean(age)
 mean(BelkinElagoComplete$age)
@@ -15,17 +15,14 @@ cor(BelkinElagoComplete$salary,BelkinElagoComplete$education)
 cor(BelkinElagoComplete$salary,BelkinElagoComplete$age)
 cor(BelkinElagoComplete$salary,BelkinElagoComplete$car)
 cor(BelkinElagoComplete$car,BelkinElagoComplete$salary)
-credit.regression<-glm(credit~salary+age+education,data=df)
-credit.regression<-glm(credit~salary+age+education,data=TRUE)
-credit.regression<-lm(credit~salary+age+education,data=df)
-credit.regression<-lm(credit~salary+age+education)
+
+
 hist(BelkinElagoComplete$credit)
 var(BelkinElagoComplete$salary)
 var(BelkinElagoComplete$credit)
 knitr::opts_chunk$set(echo = TRUE)
-summary(cars)
-summary(cars)
-names(BelkinElagoComplete)<-c("salary","age","elevel","car","zip","credit","brand")
+
+
 credit.regression<-glm(BelkinLagoComplete$credit~BelkinLagoComplete$salary+BelkinLagoComplete$age+BelkinLagoComplete$education)
 credit.regression<-glm(BelkinElagoComplete$credit~BelkinElagoComplete$salary+BelkinElagoComplete$age+BelkinElagoComplete$education)
 credit.regression<-glm(BelkinElagoComplete$credit~BelkinElagoComplete$salary+BelkinElagoComplete$age)
@@ -55,8 +52,8 @@ BelkinData<-BelkinElagoComplete
 View(BelkinData)
 Belkin_small<-BelkinData[BelkinData$salary<100000000]
 Belkin_small<-BelkinData[BelkinData$salary<10000000]
-BelkinData$salary[BelkinData$salary>100000000]<-NULL
+
 Belkin_small<-BelkinData[BelkinData$salary<10000000,]
 View(Belkin_small)
-View(Belkin_small)
+
 library(usethis)
