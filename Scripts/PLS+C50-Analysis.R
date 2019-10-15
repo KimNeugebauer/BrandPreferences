@@ -89,16 +89,21 @@ print(cmPls)
 library(entropy)
 
 entropy_2(BelkinData$education,BelkinData$brand)
+
 ggplot(BelkinData, aes(education, fill = brand)) + geom_bar()
 
 entropy(BelkinData$salary,method="ML")
+
 entropy(BelkinData$credit,method="ML")
+
 entropy(BelkinData$age,method="ML")
+
 entropy(BelkinData$education,method="ML")
 
 var_rank_info(BelkinData, "brand")
 
 varImp(plsFit)
+
 
 ### Alternate tuning grid
 
