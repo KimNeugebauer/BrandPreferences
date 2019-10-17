@@ -1,47 +1,60 @@
+---
+title: "Customer Brand Preferences"
+author: "KimN"
+date: "17 10 2019"
+output: html_document
+---
 
-### Introdcution to caret Tutorial - Pls Analysis of Belkin Data
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
 
-#Loading data and libraries
+### Partial Least Squares Analysis
 
+```{r loading data}
 BelkinElagoComplete <- 
   read.delim("C:/Users/kimne/Ubiqum/Module2/BelkinElagoComplete.csv")
 
-View(BelkinElagoComplete)
+#View(BelkinElagoComplete)
 
 BelkinData <- BelkinElagoComplete
 
 library(caret)
 library(mlbench)
 library(dplyr)
+```
 
+# Renaming attributes
 
-### Renaming attributes 
-
+```{r naming}
 names(BelkinData) <- 
   c("salary","age","education","car","zip","credit","brand")
+```
 
+# Selecting subset of arrtributes, pre-processing
 
-
-### Selecting subset of arrtributes, pre-processing
-
+```{r pre-processing}
 BelkinSmall <- BelkinData %>% select("salary","age","education","brand")
 
 as.factor(BelkinSmall$brand)
-as.factor(BelkinSmall$education)
 
+as.factor(BelkinSmall$education)
+```
 
 ### Data splitting
 
+```{r data-splitting}
 inTrain <- createDataPartition(y=BelkinSmall$brand, 
                                p=0.75, list=FALSE)
 str(inTrain)
 
 training <- BelkinSmall[inTrain,]
 testing <- BelkinSmall[-inTrain,]
-
+```
 
 ### PLS Model, 10 fold cross validation
 
+```{r PLS Model}
 ctrl <- trainControl(method = "repeatedcv", 
                      number = 10,
                      repeats = 3)
@@ -51,11 +64,14 @@ plsFit <- train(brand~., data=training,
                 preProc=c("center","scale"),
                 tuneLength = 4,
                 trControl=ctrl)
-ggplot(plsFit)
+plsFit
 
+ggplot(plsFit)
+```
 
 ### PLS model using Metric = ROC
 
+```{r PLS Model with ROC}
 ctrl <- trainControl(method = "repeatedcv", 
                      repeats = 3,
                      number = 10,
@@ -69,61 +85,48 @@ plsFit <- train(brand~., data=training,
                 trControl=ctrl, 
                 metric="ROC")
 
-ggplot(plsFit)
-
 plsFit
 
+ggplot(plsFit)
+```
 
 ### Importance of variables
 
+```{r var imp}
 varImp(plsFit)
+```
 
+# Prediction Model
 
-
-### Predictions using probabilities
-
-plsPred <- predict(plsFit, newdata=testing, 
-        type="prob")   ## in this option the confusion metric does not work
-
-
-
-### Complete PLS Model with Accuracy and Kappa, no probabilities
-
-ctrl <- trainControl(method = "repeatedcv", 
-                     repeats = 3)
-
-plsFit <- train(brand~ ., data = training,
-                method = "pls",
-                preProc = c("center", "scale"),
-                tuneLength = 3,
-                trControl = ctrl)
-
-ggplot(plsFit)
-
+```{r prediction}
 plsPred <- predict(plsFit, newdata = testing)
+```
 
+# Confusion Metrix
 
-### Confusion Metrix
-
+```{r confusion metrix}
 cmPls <- confusionMatrix(plsPred, testing$brand)
 
 print(cmPls)
+```
 
+# Entropy and Info Gain
 
-### Entropy and Info Gain
-
+```{r entropy}
 library(entropy)
+library(funModeling)
 
 entropy_2(BelkinData$education,BelkinData$brand)
 
-# to check, see: ggplot(BelkinData, aes(education, fill = brand)) + geom_bar()
+ggplot(BelkinData, aes(education, fill = brand)) + geom_bar()
 
 
 entropy(BelkinData$salary,method="ML")
 
-entropy(BelkinData$credit,method="ML")
-
 entropy(BelkinData$age,method="ML")
 
 entropy(BelkinData$education,method="ML")
+```
+
+
 

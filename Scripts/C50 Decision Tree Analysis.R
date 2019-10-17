@@ -10,6 +10,7 @@ BelkinData <- BelkinElagoComplete
 library(caret)
 library(mlbench)
 library(C50)
+library(dplyr)
 
 
 ### Renaming attributes 
@@ -18,14 +19,22 @@ names(BelkinData) <-
   c("salary","age","education","car","zip","credit","brand")
 
 
+### Selecting subset of arrtributes, pre-processing
+
+BelkinSmall <- BelkinData %>% select("salary","age","education","brand")
+
+as.factor(BelkinSmall$brand)
+as.factor(BelkinSmall$education)
+
+
 ### Data splitting
 
-inTrain <- createDataPartition(y=BelkinData$brand, 
+inTrain <- createDataPartition(y=BelkinSmall$brand, 
                                p=0.75, list=FALSE)
 str(inTrain)
 
-training <- BelkinData[inTrain,]
-testing <- BelkinData[-inTrain,]
+training <- BelkinSmall[inTrain,]
+testing <- BelkinSmall[-inTrain,]
 
 
 
@@ -35,6 +44,8 @@ vars <- c("age","education","salary")
 
 c50Fit <- C5.0(x = training[,vars], 
                y = training$brand,
+               tuneLength = 4,
+               mtry = 2,
                control = C5.0Control())
 
 summary(c50Fit)
@@ -98,9 +109,3 @@ C5imp(c50_boost, metric="splits")
 ### Confusion Metrix
 
 confusionMatrix(c50Pred_boost, testing$brand)
-
-
-### Alternate tuning grid ???
-
-expand.grid(height = seq(60, 80, 5), weight = seq(100, 300, 100), 
-            brand = c("Belkin","Elago"))

@@ -13,6 +13,7 @@ BelkinData <- BelkinElagoComplete
 library(caret)
 library(mlbench)
 library(rpart)
+library(dplyr)
 
 
 ### Renaming attributes 
@@ -21,21 +22,29 @@ names(BelkinData) <-
   c("salary","age","education","car","zip","credit","brand")
 
 
+### Selecting subset of arrtributes, pre-processing
+
+BelkinSmall <- BelkinData %>% select("salary","age","education","brand")
+
+as.factor(BelkinSmall$brand)
+as.factor(BelkinSmall$education)
+
+
 ### Data splitting
 
-inTrain <- createDataPartition(y=BelkinData$brand, 
+inTrain <- createDataPartition(y=BelkinSmall$brand, 
                                p=0.75, list=FALSE)
 str(inTrain)
 
-training <- BelkinData[inTrain,]
-testing <- BelkinData[-inTrain,]
+training <- BelkinSmall[inTrain,]
+testing <- BelkinSmall[-inTrain,]
 
 
-### Random Forest, bagged trees
+### Random Forest, bagged trees, manually tuned
 
-grid = expand.grid(mtry = c(3, 4, 8))  # why this shitty mtry ??
+grid = expand.grid(.mtry = c(2,3)) 
 
-ctrl <- trainControl(method = "oob", 
+ctrl <- trainControl(method = "oob" ,
                      search = "grid",
                      classProbs = TRUE
                      )
@@ -44,12 +53,17 @@ rfFit <- train(brand~., data=training,
                 method="rf", 
                 preProc=c("center","scale"),
                 tuneGrid = grid,
-                #tuneLength = 3, ## what does it tell me here?
-                trControl=ctrl,
+                trControl=ctrl
                )
+
+
 rfFit
 ggplot(rfFit)
 
+
+### Importance of variables
+
+varImp(rfFit)
 
 
 ### Prediction Model
@@ -65,10 +79,5 @@ table(predict(rfFit))
 cmrf <- confusionMatrix(rfPred, testing$brand)
 
 print(cmrf)
-
-
-### Importance of variables
-
-varImp(rfFit)
 
 

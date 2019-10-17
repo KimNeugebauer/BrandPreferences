@@ -106,51 +106,6 @@ expand.grid(height = seq(60, 80, 5), weight = seq(100, 300, 100),
             brand = c("Belkin","Elago"))
 
 
-### Decision Tree Model #1
-
-vars <- c("age","education","salary")
-
-c50Fit <- C5.0(x=training[,vars], y=training$brand,
-               control = C5.0Control())
-
-summary(c50Fit)
-plot(c50Fit)
-table(predict(c50Fit,testing[,vars]))
-
-C5imp(c50Fit, metric="usage")
-C5imp(c50Fit, metric="splits")
-
-
-### Decision Tree Model #2 - Gradient boosting
-
-c50_boost <- C5.0(x=training[-4],y=training$brand, 
-                  trial=3, control = C5.0Control())
-
-summary(c50_boost)
-plot(c50_boost)
-table(predict(c50_boost, testing[,vars]))
-
-C5imp(c50_boost, metric="usage")
-C5imp(c50_boost, metric="splits")
-
-
-
-### Prediction Model using Decision tree
-
-c50Pred <- predict(c50Fit, newdata = testing[1:10,vars])
-
-
-c50Pred_boost <- predict(c50_boost, 
-                         newdata = testing[1:4,vars])
-
-c50Pred_boost <- predict(c50_boost, 
-                         newdata = testing[1:3,vars],
-                         type="prob")
-
-c50Pred_boost <- predict(c50_boost, 
-                         newdata = testing[1:10,vars],
-                         type="prob")
-
 
 
 
