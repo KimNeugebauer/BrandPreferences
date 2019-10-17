@@ -50,7 +50,7 @@ c50Fit <- C5.0(x = training[,vars],
 
 summary(c50Fit)
 
-plot(c50Fit)
+plot(c50Fit)  # why does this look to shitty ??
 
 table(predict(c50Fit,testing[,vars]))
 

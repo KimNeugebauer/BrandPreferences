@@ -9,36 +9,74 @@ output: html_document
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
-### Partial Least Squares Analysis
 
-```{r loading data}
+
+In the following, we will evaluate the brand preferences of Blackwell´s customers using:
+
+1. PLS Analysis
+  + 1.1 Training and testing the model
+  + 1.2 Brand Predictions
+
+2. Decision Tree
+  + 2.1 Training and testing the model
+  + 2.2 Brand Predictions
+  
+3. Random Forest Analysis
+  + 3.1 Training and testing the model
+  + 3.2 Brand Predictions
+
+
+But first, we will load the data and all neccessary libraries
+
+### Loading data sets and libraries
+
+```{r loading data, echo = TRUE, message=FALSE}
+
 BelkinElagoComplete <- 
   read.delim("C:/Users/kimne/Ubiqum/Module2/BelkinElagoComplete.csv")
 
-#View(BelkinElagoComplete)
+SurveyIncomplete <- 
+  read.csv("C:/Users/kimne/Ubiqum/Module2/BrandPreferences/Data/SurveyIncomplete.csv")
 
 BelkinData <- BelkinElagoComplete
+
 
 library(caret)
 library(mlbench)
 library(dplyr)
+library(C50)
+library(entropy)
+library(funModeling)
 ```
 
-# Renaming attributes
+
+### Renaming attributes
 
 ```{r naming}
 names(BelkinData) <- 
   c("salary","age","education","car","zip","credit","brand")
+
+names(SurveyIncomplete) <- 
+  c("salary","age","education","car","zip","credit","brand")
 ```
 
-# Selecting subset of arrtributes, pre-processing
+
+### Selecting subset of arrtributes, pre-processing
 
 ```{r pre-processing}
 BelkinSmall <- BelkinData %>% select("salary","age","education","brand")
 
+Incomplete <- SurveyIncomplete %>% select("salary","age","education","brand")
+```
+
+```{r factoring, eval = FALSE}
 as.factor(BelkinSmall$brand)
 
 as.factor(BelkinSmall$education)
+
+as.factor(Incomplete$education)
+
+testing$brand <- as.factor(testing$brand)
 ```
 
 ### Data splitting
@@ -49,10 +87,17 @@ inTrain <- createDataPartition(y=BelkinSmall$brand,
 str(inTrain)
 
 training <- BelkinSmall[inTrain,]
+
 testing <- BelkinSmall[-inTrain,]
 ```
 
-### PLS Model, 10 fold cross validation
+
+
+# 1. Partial Least Squares Analysis
+# 1.1 Training and testing the model
+
+
+### PLS Model using 10 fold cross-validation
 
 ```{r PLS Model}
 ctrl <- trainControl(method = "repeatedcv", 
@@ -66,7 +111,9 @@ plsFit <- train(brand~., data=training,
                 trControl=ctrl)
 plsFit
 
-ggplot(plsFit)
+ggplot(plsFit) +
+  ggtitle("PLS Model using CV with k=10 and Accuracy") +
+  xlab("Number of Parameters")
 ```
 
 ### PLS model using Metric = ROC
@@ -87,8 +134,11 @@ plsFit <- train(brand~., data=training,
 
 plsFit
 
-ggplot(plsFit)
+ggplot(plsFit) +
+  ggtitle("PLS Model using CV with k=10 and ROC metric") +
+  xlab("Number of Parameters")
 ```
+
 
 ### Importance of variables
 
@@ -96,26 +146,25 @@ ggplot(plsFit)
 varImp(plsFit)
 ```
 
-# Prediction Model
+### Prediction Model
 
-```{r prediction}
+```{r prediction PLS}
 plsPred <- predict(plsFit, newdata = testing)
+
+summary(plsPred)
 ```
 
-# Confusion Metrix
+### Confusion Metrix
 
-```{r confusion metrix}
+```{r confusion metrix PLS}
 cmPls <- confusionMatrix(plsPred, testing$brand)
 
 print(cmPls)
 ```
 
-# Entropy and Info Gain
+### Entropy and Info Gain
 
 ```{r entropy}
-library(entropy)
-library(funModeling)
-
 entropy_2(BelkinData$education,BelkinData$brand)
 
 ggplot(BelkinData, aes(education, fill = brand)) + geom_bar()
@@ -130,3 +179,245 @@ entropy(BelkinData$education,method="ML")
 
 
 
+# 1.2 Brand Prediction - PLS
+
+
+### Applying the trained PLS Model to make prediction
+
+```{r PLS Model final}
+ctrl <- trainControl(method = "repeatedcv", 
+                     number = 10,
+                     repeats = 3)
+
+plsFit <- train(brand~., data=BelkinSmall, 
+                method="pls", 
+                preProc=c("center","scale"),
+                tuneLength = 4,
+                trControl=ctrl)
+plsFit
+
+ggplot(plsFit) +
+  ggtitle("PLS Model using CV with k=10 and Accuracy - Brand Predictions") +
+  xlab("Number of Parameters")
+```
+
+## Applying the trained PLS model using ROC for predictions
+
+```{r PLS Model with ROC final}
+ctrl <- trainControl(method = "repeatedcv", 
+                     repeats = 3,
+                     number = 10,
+                     classProbs=TRUE, 
+                     summaryFunction=twoClassSummary)
+
+plsFit <- train(brand~., data=BelkinSmall, 
+                method="pls", 
+                preProc=c("center","scale"),
+                tuneLength = 4,
+                trControl=ctrl, 
+                metric="ROC")
+
+plsFit
+
+ggplot(plsFit) +
+  ggtitle("PLS Model using CV with k=10 and ROC metric - Brand Predictions") +
+  xlab("Number of Parameters")
+```
+
+
+### Brand Prediction Model with PLS
+
+```{r prediction final PLS}
+plsPred <- predict(plsFit, newdata = Incomplete)
+
+summary(plsPred)
+```
+
+
+
+# 2. Decision Tree
+# 2.1 Training and testing the model
+
+
+### Decision Tree Model
+
+```{r decisionTree Model}
+vars <- c("age","education","salary")
+
+c50Fit <- C5.0(x = training[,vars], 
+               y = training$brand,
+               tuneLength = 4,
+               trial = 4,
+               mtry = 2,
+               control = C5.0Control())
+
+summary(c50Fit)
+
+plot(c50Fit, main="Decision Tree")
+
+table(predict(c50Fit,testing[,vars]))
+```
+
+
+### Making predictions based on the trained Model
+
+```{r tree prediction}
+c50Pred <- predict(c50Fit, 
+                   newdata = testing)
+
+c50Pred <- predict(c50Fit, 
+                    newdata = testing,
+                    type="prob")
+
+c50Pred <- predict(c50Fit, 
+                    newdata = testing,
+                    type="class")
+```
+
+### Importance of variables - Decision Tree
+
+```{r variable importancefor tree}
+C5imp(c50Fit, metric="splits")
+```
+
+### Confusion Metrix - Decision Tree
+
+```{r confusion metrix tree}
+confusionMatrix(c50Pred, testing$brand)
+```
+
+
+
+# 2.2 Brand Prediction - Decision Tree
+
+
+### Training the Decision Tree Model
+
+```{r decisionTree Model final}
+vars <- c("age","education","salary")
+
+c50Fit <- C5.0(x = BelkinSmall[,vars], 
+               y = BelkinSmall$brand,
+               tuneLength = 4,
+               trial = 4,
+               mtry = 2,
+               control = C5.0Control())
+
+summary(c50Fit)
+
+plot(c50Fit, main="Decision Tree")
+
+table(predict(c50Fit,BelkinSmall[,vars]))
+
+```
+
+
+### Final Predictions - Decision Tree
+
+```{r tree prediction final}
+c50Pred <- predict(c50Fit, 
+                   newdata = Incomplete)
+
+c50Pred <- predict(c50Fit, 
+                    newdata = Incomplete,
+                    type="prob")
+
+c50Pred <- predict(c50Fit, 
+                    newdata = Incomplete,
+                    type="class")
+
+summary(c50Pred)
+```
+
+
+
+# 3. Random Forest Analysis
+# 3.1 Training and testing the model
+
+
+### Random Forest Model using bagged trees, manually tuned
+
+```{r rf model}
+grid = expand.grid(.mtry = c(2,3)) 
+
+ctrl <- trainControl(method = "oob" ,
+                     search = "grid",
+                     classProbs = TRUE
+                     )
+
+rfFit <- train(brand~., data=training, 
+                method="rf", 
+                preProc=c("center","scale"),
+                tuneGrid = grid,
+                trControl=ctrl
+               )
+
+rfFit
+
+ggplot(rfFit) +
+  ggtitle("Random Forest Model") +
+  xlab("Number of Parameters")
+```
+
+
+### Importance of variables in RF Model
+
+```{r var imp for rf}
+varImp(rfFit)
+```
+
+### Prediction Model - Random Forest
+
+```{r rf prediction}
+rfPred <- predict(rfFit, newdata=testing, 
+                   type="raw")  ## why raw? why does class not work ??
+
+table(predict(rfFit))
+```
+
+### Confusion Metrix - Random Forest
+
+```{r conf.metrix rf}
+cmrf <- confusionMatrix(rfPred, testing$brand)
+
+print(cmrf)
+```
+
+
+
+# 3.2 Brand Prediction - Random Forest
+
+
+### Training the RF Model
+
+```{r rf model final}
+grid = expand.grid(.mtry = c(2,3)) 
+
+ctrl <- trainControl(method = "oob" ,
+                     search = "grid",
+                     classProbs = TRUE
+                     )
+
+rfFit <- train(brand~., data=BelkinSmall, 
+                method="rf", 
+                preProc=c("center","scale"),
+                tuneGrid = grid,
+                trControl=ctrl
+               )
+
+rfFit
+
+ggplot(rfFit) +
+  ggtitle("Random Forest Model") +
+  xlab("Number of Parameters")
+```
+
+
+### Final Predictions - Random Forest
+
+```{r rf prediction final}
+rfPred <- predict(rfFit, newdata=Incomplete, 
+                   type="raw")  ## why raw? why does class not work ??
+
+table((rfPred))
+```
