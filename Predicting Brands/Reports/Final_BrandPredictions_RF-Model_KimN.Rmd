@@ -1,0 +1,162 @@
+---
+title: "Customer Brand Preferences"
+author: "KimN"
+date: "17 10 2019"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+In the following, we will evaluate the brand preferences of Blackwell´s customers using Random Forest Analysis. 
+We will start by training and testing the model with the complete data set and then move on to predicting brand preferences.
+
+
+Therefore, the following preparatory steps have been undertaken in advance.
+
+*Loading data sets and libraries
+
+```{r loading data, echo = FALSE, message=FALSE}
+
+BelkinElagoComplete <- 
+  read.delim("C:/Users/kimne/Ubiqum/Module2/BelkinElagoComplete.csv")
+
+SurveyIncomplete <- 
+  read.csv("C:/Users/kimne/Ubiqum/Module2/BrandPreferences/Data/SurveyIncomplete.csv")
+
+
+library(caret)
+library(mlbench)
+library(dplyr)
+```
+
+
+*Renaming attributes
+
+```{r naming, echo = FALSE}
+names(BelkinElagoComplete) <- 
+  c("salary","age","education","car","zip","credit","brand")
+
+names(SurveyIncomplete) <- 
+  c("salary","age","education","car","zip","credit","brand")
+```
+
+
+*Selecting subset of arrtributes, pre-processing
+
+```{r pre-processing, echo = FALSE}
+BelkinSmall <- BelkinElagoComplete %>% select("salary","age","education","brand")
+
+Incomplete <- SurveyIncomplete %>% select("salary","age","education","brand")
+```
+
+```{r factoring, include = FALSE}
+as.factor(BelkinSmall$brand)
+
+as.factor(BelkinSmall$education)
+
+as.factor(Incomplete$education)
+```
+
+*Data splitting
+
+```{r data-splitting, include = FALSE}
+inTrain <- createDataPartition(y=BelkinSmall$brand, 
+                               p=0.75, list=FALSE)
+str(inTrain)
+
+training <- BelkinSmall[inTrain,]
+
+testing <- BelkinSmall[-inTrain,]
+```
+
+
+
+```{r plot, echo = FALSE}
+ggplot(BelkinSmall, aes(brand)) + geom_bar(fill = "lightgreen") + ggtitle("Distribution of brand choices in the complete data set") + xlab("brand choice")
+```
+
+
+## Training the Random Forest Model with the training data
+
+```{r rf model, echo = FALSE}
+grid = expand.grid(.mtry = c(2,3)) 
+
+ctrl <- trainControl(method = "oob" ,
+                     search = "grid",
+                     classProbs = TRUE
+                     )
+
+rfFit <- train(brand~., data=training, 
+                method="rf", 
+                preProc=c("center","scale"),
+                tuneGrid = grid,
+                trControl=ctrl
+               )
+
+rfFit
+```
+
+
+
+## Checking RF Model performance by predicting on the test data set
+
+```{r rf prediction, echo = FALSE}
+rfPred <- predict(rfFit, newdata=testing, 
+                   type="raw")  ## why raw? why does class not work ??
+
+testing$brand_pred <- predict(rfFit, testing,
+                              type = "raw")
+
+
+table(rfPred)
+```
+
+## Checking prediction performance with Confusion Metrix
+
+```{r conf.metrix rf, echo = FALSE}
+cmrf <- confusionMatrix(rfPred, testing$brand)
+
+print(cmrf)
+```
+
+
+
+# Final Brand Predictions
+
+
+```{r rf model final, echo = FALSE}
+grid = expand.grid(.mtry = c(2,3)) 
+
+ctrl <- trainControl(method = "oob" ,
+                     search = "grid",
+                     classProbs = TRUE
+                     )
+
+rfFitFinal <- train(brand~., data=BelkinSmall, 
+                method="rf", 
+                preProc=c("center","scale"),
+                tuneGrid = grid,
+                trControl=ctrl
+               )
+
+ggplot(rfFitFinal) +
+  ggtitle("Random Forest Model") +
+  xlab("Number of Parameters")
+
+rfFitFinal
+```
+
+
+```{r rf prediction final, echo = FALSE}
+rfPredFinal <- predict(rfFitFinal, newdata=Incomplete, 
+                   type="raw")  
+
+
+Incomplete$brand_Pred <- predict(rfFitFinal, Incomplete)
+
+table((rfPredFinal))
+
+ggplot(Incomplete, aes(brand_Pred)) + geom_bar(fill = "lightgreen") + ggtitle("Prediction of customer`s brand preferences") + xlab("brand choice")
+```

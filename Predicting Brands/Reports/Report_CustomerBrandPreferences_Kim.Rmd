@@ -151,6 +151,10 @@ varImp(plsFit)
 ```{r prediction PLS}
 plsPred <- predict(plsFit, newdata = testing)
 
+testing$brand_pred <- predict(plsFit, testing)
+
+#postResample(plsPred, testing$brand)
+
 summary(plsPred)
 ```
 
@@ -219,6 +223,7 @@ plsFit <- train(brand~., data=BelkinSmall,
 
 plsFit
 
+
 ggplot(plsFit) +
   ggtitle("PLS Model using CV with k=10 and ROC metric - Brand Predictions") +
   xlab("Number of Parameters")
@@ -230,7 +235,13 @@ ggplot(plsFit) +
 ```{r prediction final PLS}
 plsPred <- predict(plsFit, newdata = Incomplete)
 
+Incomplete$brand_Pred <- predict(plsFit, Incomplete)
+```
+
+```{r prediction results PLS}
 summary(plsPred)
+
+ggplot(Incomplete, aes(Incomplete$brand_Pred)) + geom_bar()
 ```
 
 
@@ -325,8 +336,14 @@ c50Pred <- predict(c50Fit,
 c50Pred <- predict(c50Fit, 
                     newdata = Incomplete,
                     type="class")
+```
 
+```{r prediction results tree}
 summary(c50Pred)
+
+Incomplete$brand_Pred <- predict(rfFit, Incomplete)
+
+ggplot(Incomplete, aes(Incomplete$brand_Pred)) + geom_bar(fill = "lightgreen")
 ```
 
 
@@ -419,5 +436,11 @@ ggplot(rfFit) +
 rfPred <- predict(rfFit, newdata=Incomplete, 
                    type="raw")  ## why raw? why does class not work ??
 
+# what is wrong here?? postResample(rfFit, Incomplete$brand)
+
 table((rfPred))
+
+Incomplete$brand_Pred <- predict(rfFit, Incomplete)
+
+ggplot(Incomplete, aes(Incomplete$brand_Pred)) + geom_bar(fill = "lightgreen")
 ```
